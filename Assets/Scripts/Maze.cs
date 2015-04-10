@@ -7,6 +7,8 @@ public class Maze : MonoBehaviour
 {
 	public bool IsSquare;
 	public int MaxWidth, MaxHeight;
+	public bool RemoveDeadEnds;
+
 	public GameObject CameraGameObject;
 
 	private int Width, Height;
@@ -209,6 +211,28 @@ public class Maze : MonoBehaviour
 			} else {
 				currentCell = cellLocations.Pop ();
 			}
+		}
+
+		if (RemoveDeadEnds) {
+			for (int i = 0; i < Width; i++) {
+				for (int j = 0; j < Height; j++) {
+					Int32Point cell = new Int32Point (i, j);
+					List<Int32Point> neighbours = GetCellNeighbours (cell);
+					List<Int32Point> disconnectedNeighbours = new List<Int32Point> ();
+					
+					foreach (var neighbour in neighbours) {
+						if (HasWallBetween (cell, neighbour)) {
+							disconnectedNeighbours.Add (neighbour);
+						}
+					}
+					
+					if (disconnectedNeighbours.Count > 0) {
+						if (disconnectedNeighbours.Count == neighbours.Count - 1) {
+							KnockWallBetween (cell, disconnectedNeighbours [Random.Range (0, disconnectedNeighbours.Count)]);	
+						}
+					}
+				}
+			}	
 		}
 	}
 	

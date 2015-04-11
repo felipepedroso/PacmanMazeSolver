@@ -3,50 +3,36 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine.Events;
+using System;
 
-public class PacmanBehavior : MonoBehaviour {
-	public float Speed;
-
-
-	private Maze maze;
-
-	List<Int32Point> path;
-
-	GameObject dfsButtonGameObject;
-
-	UnityAction dfsUnityAction;
-
+public class PacmanBehavior : MovableBehavior {
+	private float[] Angles = {90, 0,270,180};
 	// Use this for initialization
 	void Start () {
-		maze = (Maze)FindObjectOfType<Maze> ();
 	}
 
-	// Update is called once per frame
 	void Update () {
-		if (!LeanTween.isTweening (gameObject)) {
-			gameObject.GetComponent<Animator>().enabled = false;
-
-			if (Input.GetKeyUp (KeyCode.Q)) {
-				DoDFS();
-			}
-			if (Input.GetKeyUp (KeyCode.W)) {
-				DoBFS();
-			}
-
-			if (path != null && path.Count > 0) {
-				maze.PacmanLayer.MoveThroughPath (gameObject, path, Speed);
-				path = null;
-			}
-		} else {
-			gameObject.GetComponent<Animator>().enabled = true;
+		if (Input.GetKeyDown(KeyCode.UpArrow)) {
+			Move(Direction.Up);
+		}
+		
+		if (Input.GetKeyDown(KeyCode.DownArrow)) {
+			Move(Direction.Down);
+		}
+		
+		if (Input.GetKeyDown(KeyCode.RightArrow)) {
+			Move(Direction.Right);
+		}
+		
+		if (Input.GetKeyDown(KeyCode.LeftArrow)) {
+			Move(Direction.Left);
 		}
 	}
 
-	public void DoDFS(){
-		path = maze.Graph.DepthFirstSearchPath (maze.PacmanLayer.GetTilePosition (gameObject));
+	public override void Move (Direction direction)
+	{
+		transform.eulerAngles = new Vector3 (0, 0, Angles [(int)direction]);
+		base.Move (direction);
 	}
 
-	public void DoBFS(){
-		path = maze.Graph.BreadthFirstSearchShortestPath (maze.PacmanLayer.GetTilePosition (gameObject));
-	}
 }

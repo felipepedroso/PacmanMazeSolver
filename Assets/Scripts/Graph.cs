@@ -133,17 +133,13 @@ public class Graph <T>
 		Queue<Node<T>> nodes = new Queue<Node<T>> ();
 		List<Node<T>> visitedNodes = new List<Node<T>> ();
 		Dictionary<Node<T>,List<T>> pathTo = new Dictionary<Node<T>, List<T>> ();
-		List<T> resultantPath = new List<T> ();
 	
 		nodes.Enqueue (startVertex);
 		pathTo.Add(startVertex, new List<T>());
 		pathTo [startVertex].Add (startVertex.Value);
 
 		while (nodes.Count > 0) {
-			//if(runBFS(q.poll(),w,visited,q,pathTo))
-			//	break; 
 			Node<T> node = nodes.Dequeue ();
-
 
 			if (visitedNodes.Contains (node)) {
 			} else if (node.Equals (endVertex)) {

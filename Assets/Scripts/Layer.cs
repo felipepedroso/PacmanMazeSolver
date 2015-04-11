@@ -18,11 +18,6 @@ public class Layer
 	public const string LAYER_SUFFIX = "Layer";
 	public const string TILE_SUFFIX = "Tile";
 
-	public bool IsAnimating {
-		get;
-		private set;
-	}
-		
 	public int Width {
 		get;
 		private set;
@@ -48,6 +43,12 @@ public class Layer
 	public string Name {
 		get { return LayerGameObject != null ? LayerGameObject.name : LAYER_SUFFIX; }
 	}
+
+	public int TotalCells {
+		get {
+			return Width * Height;
+		}
+	}
 	
 	public Layer (string layerName, Vector3 position, int width, int height)
 	{
@@ -58,9 +59,8 @@ public class Layer
 		layerGameObject = new GameObject ();
 		layerGameObject.name = layerName;
 		layerGameObject.transform.position = position;
-		IsAnimating = false;
 	}
-		
+
 	public void Destroy ()
 	{
 		if (layerGameObject != null) {
@@ -70,6 +70,10 @@ public class Layer
 		if (layerArray != null) {
 			layerArray = null;
 		}
+	}
+
+	public GameObject GetTileAt (Int32Point point){
+		return GetTileAt (point.X, point.Y);
 	}
 
 	public GameObject GetTileAt (int x, int y)
@@ -96,6 +100,10 @@ public class Layer
 		return new Int32Point (-1, -1);
 	}
 
+	public bool IsPositionEmpty (Int32Point point){
+		return IsPositionEmpty (point.X, point.Y);
+	}
+
 	public bool IsPositionEmpty (int x, int y)
 	{
 		return layerArray [x, y] == null;
@@ -112,12 +120,18 @@ public class Layer
 		return false;
 	}
 
+	public Vector3 CalculateRealCoordinates (Int32Point point){
+		return CalculateRealCoordinates (point.X, point.Y);
+	}
+
 	public Vector3 CalculateRealCoordinates (int indexX, int indexY)
 	{
 		Vector3 parentPosition = layerGameObject != null ? layerGameObject.transform.position : Vector3.zero;
-			
-		//return new Vector3(parentPosition.x - ((float)Width / 2) + (float) indexX, parentPosition.y - ((float)Height / 2) + (float)indexY);
 		return new Vector3 (parentPosition.x + indexX, parentPosition.x + indexY);
+	}
+
+	public bool AddTileFromPrefab(GameObject prefabTile, Int32Point point){
+		return AddTileFromPrefab (prefabTile, point.X, point.Y);
 	}
 
 	public bool AddTileFromPrefab (GameObject prefabTile, int indexX, int indexY)
@@ -134,6 +148,10 @@ public class Layer
 		}
 
 		return false;
+	}
+
+	public bool AddTile(GameObject gameObject, Int32Point point){
+		return AddTile (gameObject, point.X, point.Y);
 	}
 
 	public bool AddTile(GameObject gameObject, int indexX, int indexY){
@@ -191,7 +209,7 @@ public class Layer
 		MoveTo (positionToMove.Key, positionToMove.Value);
 	}
 
-	public void MoveTo (GameObject gameObject, Int32Point point)
+	public void MoveTo (GameObject gameObject, Int32Point point, bool forceRemoval=false)
 	{
 		if ( point.X < 0 || point.X >= Width || point.Y < 0 || point.Y >= Height) {
 			return;
@@ -202,11 +220,48 @@ public class Layer
 			return;
 		}
 
-		RemoveTile (layerArray [point.X, point.Y]);
-
-		layerArray [point.X, point.Y] = layerArray [tilePosition.X, tilePosition.Y];
-		layerArray [tilePosition.X, tilePosition.Y] = null;
+		if (IsPositionEmpty(point) || forceRemoval) {
+			RemoveTile (layerArray [point.X, point.Y]);
+			layerArray [point.X, point.Y] = layerArray [tilePosition.X, tilePosition.Y];
+			layerArray [tilePosition.X, tilePosition.Y] = null;
+			//gameObject.transform.position = CalculateRealCoordinates (point);
+			LeanTween.move (gameObject, CalculateRealCoordinates (point), 0.2f);
+		}
 	}
 
+	public List<Int32Point> GetCellNeighbours (Int32Point cell)
+	{
+		List<Int32Point> neighbours = new List<Int32Point> ();
+		
+		if (cell != null) {
+			if (cell.X > 0) {
+				neighbours.Add(cell + Direction.Left.ToInt32Point());
+			}
+			
+			if (cell.X < Width - 1) {
+				neighbours.Add(cell + Direction.Right.ToInt32Point());
+			}
+			
+			if (cell.Y > 0) {
+				neighbours.Add(cell + Direction.Down.ToInt32Point());
+			}
+			
+			if (cell.Y < Height - 1) {
+				neighbours.Add(cell + Direction.Up.ToInt32Point());
+			}
+		}
+		
+		return neighbours;
+	}
+
+	public Int32Point GetRandomEmptyPoint(){
+		Int32Point point;
+
+		do {
+			point = Int32Point.GenerateRandomPoint(0,0,Width, Height);
+		} while(!IsPositionEmpty(point));
+
+		return point;
+	}
 
 }

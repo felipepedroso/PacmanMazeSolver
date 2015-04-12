@@ -41,7 +41,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   IsSquare: 1
   RemoveDeadEnds: 1
+  MinWidth: 5
   MaxWidth: 10
+  MinHeight: 5
   MaxHeight: 10
 --- !u!1001 &100100000
 Prefab:

@@ -11,14 +11,16 @@ public class MazeEngine : MonoBehaviour
 	public bool RemoveDeadEnds;
 
 	private int width, height;
-	public int MaxWidth, MaxHeight;
-	private const int MinDimensionSize = 3;
+	public int MinWidth, MaxWidth, MinHeight,MaxHeight;
 
 	public const string MazeLayerName = "MazeLayer";
 	public const string PacmanLayerName = "PacmanLayer";
+	public const string  PacdotLayerName = "PacdotLayer";
 
 	MazeLayer mazeLayer;
 	Layer pacmanLayer;
+
+	Layer pacdotLayer;
 
 	private GameObject pacdotGameObject;
 
@@ -40,16 +42,17 @@ public class MazeEngine : MonoBehaviour
 		layers = new List<Layer> ();
 
 		if (IsSquare) {
-			width = height = Random.Range (MinDimensionSize, MaxWidth);
+			width = height = Random.Range (MinWidth, MaxWidth);
 		} else {
-			width  = Random.Range (MinDimensionSize, MaxWidth);
-			height = Random.Range (MinDimensionSize, MaxHeight);
+			width  = Random.Range (MinWidth, MaxWidth);
+			height = Random.Range (MinHeight, MaxHeight);
 		}
 
 		Camera.main.SendMessage ("SetupCamera", new Int32Point (width, height));
 
 		GenerateMaze ();
 		CreatePacmanLayer ();
+		CreatePacdotLayer ();
 	}
 
 	void GenerateMaze ()
@@ -72,7 +75,6 @@ public class MazeEngine : MonoBehaviour
 		pacmanLayer.LayerGameObject.transform.position = Vector3.zero;
 
 		GameObject PacmanPrefab = GameObjectUtils.GetPrefabFromResources ("Prefabs/Pacman");
-		GameObject PacdotPrefab = GameObjectUtils.GetPrefabFromResources ("Prefabs/Pacdot");
 		GameObject GhostPrefab = GameObjectUtils.GetPrefabFromResources ("Prefabs/Ghost");
 
 		Int32Point pacmanPosition = pacmanLayer.GetRandomEmptyPoint ();
@@ -83,32 +85,24 @@ public class MazeEngine : MonoBehaviour
 		pacmanLayer.AddTileFromPrefab (GhostPrefab, ghostPosition);
 		pacmanLayer.GetTileAt (ghostPosition).GetComponent<GhostBehavior> ().MazeEngine = this;
 
-		CreatePacdot ();
-
 		layers.Add (pacmanLayer);
 	}
 
-	public void CreatePacdot(){
-/*		pacdotGameObject = GameObject.Find (PacdotPrefab.name + Layer.TILE_SUFFIX);
+	public void CreatePacdotLayer(){
+		pacdotLayer = new Layer (PacdotLayerName, gameObject.transform.position, width, height);
+		GameObjectUtils.AppendChild (gameObject, pacdotLayer.LayerGameObject);
+		pacdotLayer.LayerGameObject.transform.position = Vector3.zero;
 
-		if (pacdotGameObject != null) {
-			if (pacmanLayer != null) {
-				pacmanLayer.RemoveTile(pacdotGameObject);
-			}
-			Destroy(pacdotGameObject);
+		GameObject PacdotPrefab = GameObjectUtils.GetPrefabFromResources ("Prefabs/Pacdot");
+
+		for (int i = 0; i < 4; i++) {
+			Int32Point pacdotPosition = pacmanLayer.GetRandomEmptyPoint ();
+			pacdotLayer.AddTileFromPrefab (PacdotPrefab, pacdotPosition);
 		}
 
-		int pacdotX, pacdotY;
-		
-		do {
-			pacdotX = Random.Range (0, width);
-			pacdotY = Random.Range (0, height);
-		} while(!pacmanLayer.IsPositionEmpty(pacdotX, pacdotY));
-		
-		pacmanLayer.AddTileFromPrefab (PacdotPrefab, pacdotX, pacdotY);
-		pacdotGameObject = pacmanLayer.GetTileAt (pacdotX, pacdotY);
+		//pacdotLayer.GetTileAt (pacdotPosition).GetComponent<PacdotBehavior> ().MazeEngine = this;
 
-		Graph.Target = new Int32Point (pacdotX, pacdotY);*/
+		layers.Add (pacdotLayer);
 	}
 
 	public Layer GetLayerByName(string layerName){

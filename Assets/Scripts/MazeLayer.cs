@@ -4,6 +4,11 @@ using System.Collections.Generic;
 
 public class MazeLayer : Layer
 {
+	public Graph<Int32Point> MazeGraph {
+		get;
+		private set;
+	}
+
 	public MazeLayer (string layerName, Vector3 position, int width, int height) : base(layerName,position,width,height)
 	{
 		RandomizeMaze ();
@@ -139,9 +144,9 @@ public class MazeLayer : Layer
 		return intactNeighbours;
 	}
 
-	public MazeGraph GenerateGraphPathFromMaze (Int32Point point)
+	private Graph<Int32Point> GenerateGraphPathFromMaze (Int32Point point)
 	{
-		MazeGraph pathGraph = new MazeGraph ();
+		Graph<Int32Point>  pathGraph = new Graph<Int32Point>  ();
 		
 		Stack<Int32Point> cells = new Stack<Int32Point> ();
 		List<Int32Point> processedCells = new List<Int32Point> ();

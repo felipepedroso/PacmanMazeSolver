@@ -5,8 +5,9 @@ using UnityEngine;
 
 public class GhostBehavior : MovableBehavior
 {
-	//public bool isPacmanNear;
-	//public bool isPacmanStronger;
+	public Color EvadingColor;
+	public Color NormalColor;
+
 
 	public enum GhostState
 	{
@@ -17,12 +18,19 @@ public class GhostBehavior : MovableBehavior
 
 	public GhostState CurrentState { get; private set; }
 
-	void Start ()
+	public override void Start ()
 	{
-		CurrentState = GhostState.Walking;
+		base.Start ();
+		ChangeState (GhostState.Walking);
 	}
 
-	void Update ()
+	public override void Update ()
+	{
+		base.Update ();
+		UpdateStateMachine ();
+	}
+
+	void UpdateStateMachine ()
 	{
 		switch (CurrentState) {
 		case GhostState.Chasing:
@@ -38,11 +46,24 @@ public class GhostBehavior : MovableBehavior
 		}
 	}
 
+	void SetColor(Color color){
+		gameObject.GetComponent<SpriteRenderer> ().color = color;
+	}
+
 	void ChangeState (GhostState newState)
 	{
-		GhostState PreviousState = CurrentState;
-		CurrentState = newState;
-		Debug.Log (string.Format ("Switched from {0} to {1}", PreviousState, CurrentState));
+		if (CurrentState != newState) {
+			GhostState PreviousState = CurrentState;
+			CurrentState = newState;
+
+			if (CurrentState == GhostState.Evading) {
+				SetColor(EvadingColor);
+			}else{
+				SetColor(NormalColor);
+			}
+			Debug.Log (string.Format ("Switched from {0} to {1}", PreviousState, CurrentState));
+		}
+
 	}
 
 	private float deltaTime = 0;
@@ -50,55 +71,48 @@ public class GhostBehavior : MovableBehavior
 
 	void Walk ()
 	{
+		if (IsPacmanInvencible ()) {
+			ChangeState (GhostState.Evading);
+			return;
+		}
+
 		if (IsPacmanNear ()) {
-			if (IsPacmanStronger ()) {
-				ChangeState (GhostState.Evading);
-				return;
-			} else {
-				ChangeState (GhostState.Chasing);
-				return;
-			}
+			ChangeState (GhostState.Chasing);
+			return;
 		}
 
 		// Walk logic
-		if (deltaTime > 0.2) {
-			deltaTime = 0;
-			Direction[] directions = (Direction[])Enum.GetValues (typeof(Direction));
-			randomDirection = directions [UnityEngine.Random.Range (0, directions.Length)];
-			Move (randomDirection);
-		} else {
-			deltaTime += UnityEngine.Time.deltaTime;
-		}
+		RandomMove ();
 	}
 
 	void Evade ()
 	{
-		if (!IsPacmanNear ()) {
-			ChangeState (GhostState.Walking);
-			return;
-		} else {
-			if (!IsPacmanStronger ()) {
+		if (!IsPacmanInvencible ()) {
+			if (IsPacmanNear()) {
 				ChangeState (GhostState.Chasing);
+				return;
+			}else{
+				ChangeState (GhostState.Walking);
 				return;
 			}
 		}
 
-		// Evasion Logic
+		// Evasion logic
 	}
 
 	void Chase ()
 	{
-		if (!IsPacmanNear ()) {
-			ChangeState (GhostState.Walking);
+		if (IsPacmanInvencible ()) {
+			ChangeState (GhostState.Evading);
 			return;
-		} else {
-			if (IsPacmanStronger ()) {
-				ChangeState (GhostState.Evading);
-				return;
-			}
 		}
 
-		// Chasing logic
+		if (IsPacmanNear ()) {
+			// Chasing logic
+		} else {
+			ChangeState (GhostState.Walking);
+			return;
+		}
 	}
 
 	bool IsPacmanNear ()
@@ -107,10 +121,9 @@ public class GhostBehavior : MovableBehavior
 		return false;
 	}
 
-	bool IsPacmanStronger ()
+	bool IsPacmanInvencible ()
 	{
-		//return isPacmanStronger;
-		return false;
+		return MazeEngine.IsPacmanInvencible ();
 	}
 
 }

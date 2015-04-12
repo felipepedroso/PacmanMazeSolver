@@ -41,6 +41,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MazeEngine: {fileID: 0}
+  EvadingColor: {r: .07315097, g: .801220834, b: .904411793, a: 0}
+  NormalColor: {r: .996078432, g: 0, b: 0, a: 0}
 --- !u!212 &21223788
 SpriteRenderer:
   m_ObjectHideFlags: 1

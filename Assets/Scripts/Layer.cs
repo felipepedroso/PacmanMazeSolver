@@ -130,24 +130,24 @@ public class Layer
 		return new Vector3 (parentPosition.x + indexX, parentPosition.x + indexY);
 	}
 
-	public bool AddTileFromPrefab(GameObject prefabTile, Int32Point point){
+	public GameObject AddTileFromPrefab(GameObject prefabTile, Int32Point point){
 		return AddTileFromPrefab (prefabTile, point.X, point.Y);
 	}
 
-	public bool AddTileFromPrefab (GameObject prefabTile, int indexX, int indexY)
+	public GameObject AddTileFromPrefab (GameObject prefabTile, int indexX, int indexY)
 	{
+		GameObject tileInstance = null;
 		if (prefabTile != null) {
-			GameObject tileInstance = (GameObject)MonoBehaviour.Instantiate (prefabTile);
+			tileInstance = (GameObject)MonoBehaviour.Instantiate (prefabTile);
 			tileInstance.name = prefabTile.name + TILE_SUFFIX;
 
 			if (!AddTile(tileInstance, indexX, indexY)) {
 				MonoBehaviour.Destroy(tileInstance);
-				return false;
+				return null;
 			} 
-			return true;
 		}
 
-		return false;
+		return tileInstance;
 	}
 
 	public bool AddTile(GameObject gameObject, Int32Point point){
@@ -179,6 +179,11 @@ public class Layer
 			}
 		}
 		return false;
+	}
+
+	public bool RemoveTileAt (Int32Point position)
+	{
+		return RemoveTile (GetTileAt (position));
 	}
 
 	private Vector3[] CreateVector3Path (Int32Point[] points)

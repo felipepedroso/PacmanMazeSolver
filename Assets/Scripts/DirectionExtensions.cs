@@ -10,7 +10,7 @@ public static class DirectionExtensions
 		new Int32Point (-1, 0) // Left
 	};
 
-	public static Direction RandomValue {
+	public static Direction RandomDirection {
 		get {
 			return (Direction)Random.Range(0, directions.Length);
 		}

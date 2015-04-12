@@ -19,10 +19,11 @@ public class MazeEngine : MonoBehaviour
 
 	MazeLayer mazeLayer;
 	Layer pacmanLayer;
-
 	Layer pacdotLayer;
 
-	private GameObject pacdotGameObject;
+	private GhostBehavior ghost;
+	private PacmanBehavior pacman;
+
 
 	// Use this for initialization
 	void Start ()
@@ -78,13 +79,12 @@ public class MazeEngine : MonoBehaviour
 		GameObject GhostPrefab = GameObjectUtils.GetPrefabFromResources ("Prefabs/Ghost");
 
 		Int32Point pacmanPosition = pacmanLayer.GetRandomEmptyPoint ();
-		pacmanLayer.AddTileFromPrefab (PacmanPrefab, pacmanPosition);
-		pacmanLayer.GetTileAt (pacmanPosition).GetComponent<PacmanBehavior> ().MazeEngine = this;
+		pacman = pacmanLayer.AddTileFromPrefab (PacmanPrefab, pacmanPosition).GetComponent<PacmanBehavior> ();
+		pacman.MazeEngine = this;
 
 		Int32Point ghostPosition = pacmanLayer.GetRandomEmptyPoint ();
-		pacmanLayer.AddTileFromPrefab (GhostPrefab, ghostPosition);
-		pacmanLayer.GetTileAt (ghostPosition).GetComponent<GhostBehavior> ().MazeEngine = this;
-
+		ghost = pacmanLayer.AddTileFromPrefab (GhostPrefab, ghostPosition).GetComponent<GhostBehavior> ();
+		ghost.MazeEngine = this;
 		layers.Add (pacmanLayer);
 	}
 
@@ -137,5 +137,35 @@ public class MazeEngine : MonoBehaviour
 				gameObjectLayer.MoveTo(gameObject, gameObjectPosition + directionPoint);				
 			}
 		}
+	}
+
+	public Int32Point GetTilePosition (GameObject gameObject)
+	{
+		Int32Point position = null;
+
+		Layer layer = GetGameObjectLayer (gameObject);
+
+		if (layer != null) {
+			position = layer.GetTilePosition(gameObject);
+		}
+
+		return position;
+	}
+
+	public bool HasPacdotAt (Int32Point position)
+	{
+		return pacdotLayer.GetTileAt (position) != null;
+	}
+
+	public void DestroyPacdotAt (Int32Point position)
+	{
+		if (position != null) {
+			pacdotLayer.RemoveTileAt(position);
+		}
+	}
+
+	public bool IsPacmanInvencible ()
+	{
+		return pacman != null ? pacman.InvencibleMode : false;
 	}
 }

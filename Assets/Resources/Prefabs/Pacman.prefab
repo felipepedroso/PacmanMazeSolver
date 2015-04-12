@@ -56,7 +56,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb253de423283e646898b8712a843202, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Speed: 5
+  MazeEngine: {fileID: 0}
+  IgnoreAI: 1
+  InvencibilityTimeInSeconds: 40
 --- !u!212 &21243222
 SpriteRenderer:
   m_ObjectHideFlags: 1

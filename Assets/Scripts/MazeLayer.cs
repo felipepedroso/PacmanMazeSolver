@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public class MazeLayer : Layer
 {
-	public Graph<Int32Point> MazeGraph {
+	public Graph<Int32Point> Graph {
 		get;
 		private set;
 	}
@@ -75,6 +75,7 @@ public class MazeLayer : Layer
 				currentCell = cellLocations.Pop ();
 			}
 		}
+		GenerateGraphPathFromMaze ();
 	}
 
 	public void RemoveDeadEnds ()
@@ -98,6 +99,7 @@ public class MazeLayer : Layer
 				}
 			}
 		}
+		GenerateGraphPathFromMaze ();
 	}
 	
 	private void KnockWallBetween (Int32Point cell1, Int32Point cell2)
@@ -127,6 +129,18 @@ public class MazeLayer : Layer
 		}
 	}
 
+	public List<Int32Point> GetConnectedNeighbours(Int32Point cell){
+		List<Int32Point> neighbours = GetCellNeighbours (cell);
+		List<Int32Point> connectedNeighbours = new List<Int32Point> ();
+
+		foreach (Int32Point neighbour in neighbours) {
+			if (!HasWallBetween (cell, neighbour)) {
+				connectedNeighbours.Add(neighbour);
+			}
+		}
+		return connectedNeighbours;
+	}
+
 	private List<Int32Point> GetIntactNeighbours (Int32Point cell)
 	{
 		List<Int32Point> neighbours = GetCellNeighbours (cell);
@@ -144,14 +158,14 @@ public class MazeLayer : Layer
 		return intactNeighbours;
 	}
 
-	private Graph<Int32Point> GenerateGraphPathFromMaze (Int32Point point)
+	private void GenerateGraphPathFromMaze ()
 	{
 		Graph<Int32Point>  pathGraph = new Graph<Int32Point>  ();
 		
 		Stack<Int32Point> cells = new Stack<Int32Point> ();
 		List<Int32Point> processedCells = new List<Int32Point> ();
 		
-		cells.Push (point);
+		cells.Push (new Int32Point(0,0));
 		
 		while (cells.Count > 0) {
 			Int32Point cell = cells.Pop ();
@@ -171,8 +185,8 @@ public class MazeLayer : Layer
 			}
 		}
 		
-		//Debug.Log (pathGraph);
-		return pathGraph;
+		Debug.Log (pathGraph);
+		Graph = pathGraph;
 	}
 
 }

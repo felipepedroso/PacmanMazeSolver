@@ -168,4 +168,95 @@ public class MazeEngine : MonoBehaviour
 	{
 		return pacman != null ? pacman.InvencibleMode : false;
 	}
+
+	public List<Int32Point> AStarPath(Int32Point start, Int32Point end){
+		Graph<Int32Point> graph = mazeLayer.Graph;
+
+		Node<Int32Point> startNode = graph.GetNode (start);
+		HashSet<Node<Int32Point>> nodesEvaluated = new HashSet<Node<Int32Point>> ();
+		HashSet<Node<Int32Point>> nodesToEvaluate = new HashSet<Node<Int32Point>> ();
+		nodesToEvaluate.Add (startNode);
+
+		Dictionary<Int32Point,Int32Point> cameFrom = new Dictionary<Int32Point,Int32Point> ();
+
+		Dictionary<Node<Int32Point>, int> g_score = new Dictionary<Node<Int32Point>, int> ();
+		g_score [startNode] = 0;
+
+		Dictionary<Node<Int32Point>, int> f_score = new Dictionary<Node<Int32Point>, int> ();
+		f_score [startNode] = g_score [startNode] + CalculateHeuristicCost (start, end);
+
+		Node<Int32Point> endNode = graph.GetNode (end);
+
+		while (nodesToEvaluate.Count > 0) {
+			Node<Int32Point> current = GetNodeWithLowestCost(nodesToEvaluate, f_score);
+			mazeLayer.GetTileAt(current.Value).GetComponent<SpriteRenderer>().color = Color.black;
+			if (current.Equals(endNode)) {
+				//mazeLayer.GetTileAt(current.Value).GetComponent<SpriteRenderer>().color = Color.green;
+				return ReconstructPath(cameFrom, end);
+			}
+
+			nodesToEvaluate.Remove(current);
+			nodesEvaluated.Add(current);
+
+			foreach (var neighbour in current.Neighbours) {
+				if (nodesEvaluated.Contains(neighbour)) {
+					continue;
+				}
+
+				int neighbourGCost = g_score[current] + 1;
+
+				if (!nodesToEvaluate.Contains(neighbour) || neighbourGCost < g_score[neighbour]) {
+					cameFrom[neighbour.Value] = current.Value;
+					g_score[neighbour] = neighbourGCost;
+					f_score [neighbour] = g_score [neighbour] + CalculateHeuristicCost (neighbour.Value, end);
+
+					if (!nodesToEvaluate.Contains(neighbour)) {
+						//mazeLayer.GetTileAt(current.Value).GetComponent<SpriteRenderer>().color = Color.gray;
+						nodesToEvaluate.Add(neighbour);
+					}
+				}
+			}
+		}
+
+		return new List<Int32Point> ();
+	}
+
+	List<Int32Point> ReconstructPath (Dictionary<Int32Point, Int32Point> cameFrom, Int32Point end)
+	{
+		List<Int32Point> path = new List<Int32Point> ();
+		path.Add (end);
+		
+		while (cameFrom.ContainsKey(end)) {
+			end = cameFrom[end];
+			path.Add (end);
+		}
+
+		return path;
+	}
+
+	Node<Int32Point> GetNodeWithLowestCost (HashSet<Node<Int32Point>> nodesToEvaluate, Dictionary<Node<Int32Point>, int> f_score)
+	{
+		Node<Int32Point> nodeWithLowestScore = null;
+			
+		foreach (var node in nodesToEvaluate) {
+			if (nodeWithLowestScore == null || f_score[node] < f_score[nodeWithLowestScore]) {
+				nodeWithLowestScore = node;
+			}
+		}
+
+		return nodeWithLowestScore;
+	}
+
+	int CalculateHeuristicCost (Int32Point start, Int32Point end)
+	{
+		return Mathf.Abs (start.X - end.X) + Mathf.Abs (start.Y - end.Y); 
+	}
+
+	public List<Int32Point> GetPathFromPacmanToGhost(GameObject gameObject)
+	{
+		GameObject hunter = gameObject.Equals (pacman.gameObject) ? pacman.gameObject : ghost.gameObject;
+		GameObject target = gameObject.Equals (pacman.gameObject) ? ghost.gameObject : pacman.gameObject;
+
+		return AStarPath(pacmanLayer.GetTilePosition(hunter),pacmanLayer.GetTilePosition(target));
+	}
 }

@@ -2,12 +2,14 @@
 using System;
 using System.Text;
 using UnityEngine;
+using System.Collections.Generic;
 
 public class GhostBehavior : MovableBehavior
 {
 	public Color EvadingColor;
 	public Color NormalColor;
 
+	public List<Int32Point> PathToPacman { get; private set; }
 
 	public enum GhostState
 	{
@@ -22,12 +24,14 @@ public class GhostBehavior : MovableBehavior
 	{
 		base.Start ();
 		ChangeState (GhostState.Walking);
+		PathToPacman = new List<Int32Point> ();
 	}
 
 	public override void Update ()
 	{
 		base.Update ();
 		UpdateStateMachine ();
+		PathToPacman = MazeEngine.GetPathFromPacmanToGhost (gameObject);
 	}
 
 	void UpdateStateMachine ()
@@ -108,7 +112,10 @@ public class GhostBehavior : MovableBehavior
 		}
 
 		if (IsPacmanNear ()) {
-			// Chasing logic
+			Int32Point nextCell = PathToPacman[PathToPacman.Count - 2];
+			Int32Point currentPosition = MazeEngine.GetTilePosition(gameObject);
+			base.ClearMovementQueue();
+			Move((nextCell - currentPosition).ToDirectionEnum());
 		} else {
 			ChangeState (GhostState.Walking);
 			return;
@@ -117,8 +124,7 @@ public class GhostBehavior : MovableBehavior
 
 	bool IsPacmanNear ()
 	{
-		//return isPacmanNear;
-		return false;
+		return PathToPacman.Count < 5 && PathToPacman.Count > 0;
 	}
 
 	bool IsPacmanInvencible ()

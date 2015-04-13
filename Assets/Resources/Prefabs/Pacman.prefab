@@ -58,7 +58,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MazeEngine: {fileID: 0}
   IgnoreAI: 1
-  InvencibilityTimeInSeconds: 40
+  InvencibilityTimeInSeconds: 5
 --- !u!212 &21243222
 SpriteRenderer:
   m_ObjectHideFlags: 1

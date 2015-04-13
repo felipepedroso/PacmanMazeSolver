@@ -55,5 +55,10 @@ public class Int32Point {
 	public static Int32Point GenerateRandomPoint(int minX, int minY, int maxX, int maxY){
 		return new Int32Point (UnityEngine.Random.Range (minX, maxX), UnityEngine.Random.Range (minY, maxY));
 	}
+
+	public override int GetHashCode ()
+	{
+		return X.GetHashCode () + Y.GetHashCode ();
+	}
 }
 

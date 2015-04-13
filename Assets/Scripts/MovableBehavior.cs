@@ -45,6 +45,11 @@ public class MovableBehavior : MonoBehaviour
 		movementsQueue.Enqueue (direction);
 	}
 
+	public void ClearMovementQueue ()
+	{
+		movementsQueue.Clear();
+	}
+
 	public void RandomMove ()
 	{
 		Move (DirectionExtensions.RandomDirection);

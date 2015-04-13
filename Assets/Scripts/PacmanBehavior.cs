@@ -54,7 +54,7 @@ public class PacmanBehavior : MovableBehavior
 			//return;
 		}
 
-		UpdateStateMachine ();
+		UpdateStateMachine ();		
 	}
 
 	void UpdateStateMachine ()

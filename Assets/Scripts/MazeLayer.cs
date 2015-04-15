@@ -2,15 +2,16 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class MazeLayer : Layer
+public class MazeLayer : LayerBehaviour
 {
-	public Graph<Int32Point> Graph {
+	public MazeGraph Graph {
 		get;
 		private set;
 	}
 
-	public MazeLayer (string layerName, Vector3 position, int width, int height) : base(layerName,position,width,height)
+	public override void InitializeLayer (int width, int height)
 	{
+		base.InitializeLayer (width, height);
 		RandomizeMaze ();
 	}
 
@@ -34,7 +35,7 @@ public class MazeLayer : Layer
 		}
 		
 		if (wallType != WallType.None) {
-			return LayerArray [cell1.X, cell1.Y].GetComponent<CellBehavior> ().IsWallStanding (wallType);
+			return LayerGrid [cell1.X, cell1.Y].GetComponent<CellBehaviour> ().IsWallStanding (wallType);
 		}
 		
 		return false;
@@ -104,26 +105,26 @@ public class MazeLayer : Layer
 	
 	private void KnockWallBetween (Int32Point cell1, Int32Point cell2)
 	{
-		GameObject[,] CellGrid = LayerArray;
+		GameObject[,] CellGrid = LayerGrid;
 		
 		Int32Point diff = cell1 - cell2;
 		
 		if (diff.X != 0) {
 			if (diff.X > 0) {
-				CellGrid [cell1.X, cell1.Y].GetComponent<CellBehavior> ().KnockWall (WallType.Left);
-				CellGrid [cell2.X, cell2.Y].GetComponent<CellBehavior> ().KnockWall (WallType.Right);
+				CellGrid [cell1.X, cell1.Y].GetComponent<CellBehaviour> ().KnockWall (WallType.Left);
+				CellGrid [cell2.X, cell2.Y].GetComponent<CellBehaviour> ().KnockWall (WallType.Right);
 			} else {
-				CellGrid [cell1.X, cell1.Y].GetComponent<CellBehavior> ().KnockWall (WallType.Right);
-				CellGrid [cell2.X, cell2.Y].GetComponent<CellBehavior> ().KnockWall (WallType.Left);
+				CellGrid [cell1.X, cell1.Y].GetComponent<CellBehaviour> ().KnockWall (WallType.Right);
+				CellGrid [cell2.X, cell2.Y].GetComponent<CellBehaviour> ().KnockWall (WallType.Left);
 			}
 		} else {
 			if (diff.Y != 0) {
 				if (diff.Y < 0) {
-					CellGrid [cell1.X, cell1.Y].GetComponent<CellBehavior> ().KnockWall (WallType.Top);
-					CellGrid [cell2.X, cell2.Y].GetComponent<CellBehavior> ().KnockWall (WallType.Bottom);
+					CellGrid [cell1.X, cell1.Y].GetComponent<CellBehaviour> ().KnockWall (WallType.Top);
+					CellGrid [cell2.X, cell2.Y].GetComponent<CellBehaviour> ().KnockWall (WallType.Bottom);
 				} else {
-					CellGrid [cell1.X, cell1.Y].GetComponent<CellBehavior> ().KnockWall (WallType.Bottom);
-					CellGrid [cell2.X, cell2.Y].GetComponent<CellBehavior> ().KnockWall (WallType.Top);
+					CellGrid [cell1.X, cell1.Y].GetComponent<CellBehaviour> ().KnockWall (WallType.Bottom);
+					CellGrid [cell2.X, cell2.Y].GetComponent<CellBehaviour> ().KnockWall (WallType.Top);
 				}
 			}
 		}
@@ -145,13 +146,15 @@ public class MazeLayer : Layer
 	{
 		List<Int32Point> neighbours = GetCellNeighbours (cell);
 		List<Int32Point> intactNeighbours = new List<Int32Point> ();
-		
-		foreach (Int32Point neighbour in neighbours) {
-			int x = neighbour.X;
-			int y = neighbour.Y;
-			
-			if (LayerArray [x, y].GetComponent<CellBehavior> ().HasIntactWalls) {
-				intactNeighbours.Add (neighbour);
+
+		if (LayerGrid != null) {
+			foreach (Int32Point neighbour in neighbours) {
+				int x = neighbour.X;
+				int y = neighbour.Y;
+				
+				if (LayerGrid [x, y].GetComponent<CellBehaviour> ().HasIntactWalls) {
+					intactNeighbours.Add (neighbour);
+				}
 			}
 		}
 		
@@ -160,7 +163,7 @@ public class MazeLayer : Layer
 
 	private void GenerateGraphPathFromMaze ()
 	{
-		Graph<Int32Point>  pathGraph = new Graph<Int32Point>  ();
+		MazeGraph pathGraph = new MazeGraph ();
 		
 		Stack<Int32Point> cells = new Stack<Int32Point> ();
 		List<Int32Point> processedCells = new List<Int32Point> ();

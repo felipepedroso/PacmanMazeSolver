@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
-public class Graph <T>
+public abstract class Graph <T>
 {
 	private List<Node<T>> nodes;
 
@@ -70,7 +70,7 @@ public class Graph <T>
 		Node<T> startVertex = GetNode (startValue);
 		Node<T> endVertex = GetNode (endValue);
 
-		if (startVertex == null || endVertex == null || startValue.Equals(endValue)) {
+		if (startVertex == null || endVertex == null || startValue.Equals (endValue)) {
 			return new List<T> ();
 		}
 
@@ -121,7 +121,7 @@ public class Graph <T>
 		Node<T> startVertex = GetNode (startValue);
 		Node<T> endVertex = GetNode (endValue);
 		
-		if (startVertex == null || endVertex == null || startValue.Equals(endValue)) {
+		if (startVertex == null || endVertex == null || startValue.Equals (endValue)) {
 			return new List<T> ();
 		}
 		
@@ -135,7 +135,7 @@ public class Graph <T>
 		Dictionary<Node<T>,List<T>> pathTo = new Dictionary<Node<T>, List<T>> ();
 	
 		nodes.Enqueue (startVertex);
-		pathTo.Add(startVertex, new List<T>());
+		pathTo.Add (startVertex, new List<T> ());
 		pathTo [startVertex].Add (startVertex.Value);
 
 		while (nodes.Count > 0) {
@@ -143,17 +143,17 @@ public class Graph <T>
 
 			if (visitedNodes.Contains (node)) {
 			} else if (node.Equals (endVertex)) {
-				pathTo[node].Add(node.Value);
+				pathTo [node].Add (node.Value);
 				break;  
 			} else { 
 				visitedNodes.Add (node);
 
 				foreach (var neighbour in node.Neighbours) {
-					if (!pathTo.ContainsKey(neighbour)) {
-						pathTo.Add(neighbour, new List<T>());
+					if (!pathTo.ContainsKey (neighbour)) {
+						pathTo.Add (neighbour, new List<T> ());
 					}
-					pathTo[neighbour].AddRange(pathTo[node]);
-					pathTo[neighbour].Add(neighbour.Value);
+					pathTo [neighbour].AddRange (pathTo [node]);
+					pathTo [neighbour].Add (neighbour.Value);
 					nodes.Enqueue (neighbour);
 				}
 			} 
@@ -178,4 +178,92 @@ public class Graph <T>
 
 		return stringBuilder.ToString ();
 	}
+
+	public List<T> AStarPath (T start, T end, List<T> pathRestrictions)
+	{
+		if (pathRestrictions == null) {
+			pathRestrictions = new List<T>();
+		}
+
+		Graph<T> graph = this;
+		
+		Node<T> startNode = graph.GetNode (start);
+		HashSet<Node<T>> nodesEvaluated = new HashSet<Node<T>> ();
+		HashSet<Node<T>> nodesToEvaluate = new HashSet<Node<T>> ();
+		nodesToEvaluate.Add (startNode);
+		
+		Dictionary<T,T> cameFrom = new Dictionary<T,T> ();
+		
+		Dictionary<Node<T>, int> g_score = new Dictionary<Node<T>, int> ();
+		g_score [startNode] = 0;
+		
+		Dictionary<Node<T>, int> f_score = new Dictionary<Node<T>, int> ();
+		f_score [startNode] = g_score [startNode] + CalculateHeuristicCost (start, end);
+		
+		Node<T> endNode = graph.GetNode (end);
+		
+		while (nodesToEvaluate.Count > 0) {
+			Node<T> current = GetNodeWithLowestCost (nodesToEvaluate, f_score);
+			if (current.Equals (endNode)) {
+				return ReconstructPath (cameFrom, end);
+			}
+			
+			nodesToEvaluate.Remove (current);
+			nodesEvaluated.Add (current);
+			
+			foreach (var neighbour in current.Neighbours) {
+				if (pathRestrictions.Contains(neighbour.Value) && !neighbour.Value.Equals(end)) {
+					nodesEvaluated.Add (neighbour);
+					continue;
+				}
+
+				if (nodesEvaluated.Contains (neighbour)) {
+					continue;
+				}
+				
+				int neighbourGCost = g_score [current] + 1;
+				
+				if (!nodesToEvaluate.Contains (neighbour) || neighbourGCost < g_score [neighbour]) {
+					cameFrom [neighbour.Value] = current.Value;
+					g_score [neighbour] = neighbourGCost;
+					f_score [neighbour] = g_score [neighbour] + CalculateHeuristicCost (neighbour.Value, end);
+					
+					if (!nodesToEvaluate.Contains (neighbour)) {
+						nodesToEvaluate.Add (neighbour);
+					}
+				}
+			}
+		}
+		
+		return new List<T> ();
+	}
+	
+	List<T> ReconstructPath (Dictionary<T, T> cameFrom, T end)
+	{
+		List<T> path = new List<T> ();
+		path.Add (end);
+		
+		while (cameFrom.ContainsKey(end)) {
+			end = cameFrom [end];
+			path.Add (end);
+		}
+		
+		return path;
+	}
+
+	protected abstract int CalculateHeuristicCost (T start, T end);
+
+	private Node<T> GetNodeWithLowestCost (HashSet<Node<T>> nodesToEvaluate, Dictionary<Node<T>, int> f_score)
+	{
+		Node<T> nodeWithLowestScore = null;
+		
+		foreach (var node in nodesToEvaluate) {
+			if (nodeWithLowestScore == null || f_score [node] < f_score [nodeWithLowestScore]) {
+				nodeWithLowestScore = node;
+			}
+		}
+		
+		return nodeWithLowestScore;
+	}
+
 }

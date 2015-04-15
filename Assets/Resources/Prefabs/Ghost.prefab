@@ -37,11 +37,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 123788}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 55ad433b5e623dc4e9295fd4515a1734, type: 3}
+  m_Script: {fileID: 11500000, guid: 8bb5083b3731fe4428ec7ac91efb1bcd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   MazeEngine: {fileID: 0}
-  EvadingColor: {r: .07315097, g: .801220834, b: .904411793, a: 1}
+  Target: {fileID: 0}
+  EvadingColor: {r: 0, g: 1, b: 1, a: 1}
   NormalColor: {r: .996078432, g: 0, b: 0, a: 1}
 --- !u!212 &21223788
 SpriteRenderer:

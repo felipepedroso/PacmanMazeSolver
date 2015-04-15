@@ -53,11 +53,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 143222}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cb253de423283e646898b8712a843202, type: 3}
+  m_Script: {fileID: 11500000, guid: 3b2206eaca0f3bc429fed73b297c87d0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   MazeEngine: {fileID: 0}
+  Target: {fileID: 0}
+  GhostGameObject: {fileID: 0}
   IgnoreAI: 1
+  AlwaysSearchingPacdots: 1
   InvencibilityTimeInSeconds: 5
 --- !u!212 &21243222
 SpriteRenderer:

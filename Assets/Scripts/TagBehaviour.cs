@@ -35,10 +35,9 @@ public class TagBehaviour : MovableBehaviour {
 	}
 
 	public virtual void EvadeFromTarget(){
-		for (int i = 0; i < MazeEngine.Width; i++) {
-			for (int j = 0; j < MazeEngine.Height; j++) {
-				
-			}
+		if (Target != null) {
+			base.ClearMovementQueue();
+			Move(MazeEngine.GetSaferDirection(gameObject, Target));
 		}
 	}
 }

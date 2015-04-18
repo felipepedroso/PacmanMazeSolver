@@ -115,12 +115,12 @@ public class PacmanBehaviour : TagBehaviour
 		}
 
 		// Evading logic
+		Target = GhostGameObject;
+		EvadeFromTarget ();
 	}
 
 	void Chase ()
 	{
-
-
 		if (!InvencibleMode) {
 			if (IsGhostNear ()) {
 				ChangeState (PacmanState.Evading);

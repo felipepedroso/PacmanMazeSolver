@@ -260,4 +260,40 @@ public class MazeEngine : MonoBehaviour
 
 		return nearestPacdot;
 	}
+
+	public Direction GetSaferDirection (GameObject gameObject, GameObject target)
+	{
+		Graph<Int32Point> graph = mazeLayer.Graph;
+		
+		Node<Int32Point> currentNode = graph.GetNode (GetTilePosition(gameObject));
+		int currentPositionIndex = graph.Nodes.IndexOf (currentNode);
+
+		Node<Int32Point> targetPosition = graph.GetNode (GetTilePosition(target));
+		int targetIndex = graph.Nodes.IndexOf (targetPosition);
+
+		List<List<int>> distanceMatrix = mazeLayer.Graph.GetDistanceMatrix ();
+
+		Int32Point saferNode = currentNode.Value;
+		int saferNodeDistance = distanceMatrix [currentPositionIndex][targetIndex];
+		List<Int32Point> saferNodes = new List<Int32Point> ();
+
+
+
+		foreach (var neighbour in currentNode.Neighbours) {
+			int neighbourIndex = graph.Nodes.IndexOf (neighbour);
+			int neighbourDistance = distanceMatrix [neighbourIndex][targetIndex];
+
+			if (neighbourDistance > saferNodeDistance) {
+				//saferNode = neighbour.Value;
+				saferNodes.Add(neighbour.Value);
+				//saferNodeDistance = neighbourDistance;
+			}
+		}
+
+		if (saferNodes.Count > 0) {
+			saferNode = saferNodes[Random.Range(0, saferNodes.Count)];
+		}
+
+		return (saferNode - currentNode.Value).ToDirectionEnum();;
+	}
 }

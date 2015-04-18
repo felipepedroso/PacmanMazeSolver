@@ -6,10 +6,11 @@ using System.Text;
 public abstract class Graph <T>
 {
 	private List<Node<T>> nodes;
+	private List<List<int>> distanceMatrix;
 
-	public Node<T>[] Nodes {
+	public List<Node<T>> Nodes {
 		get {
-			return this.nodes.ToArray ();
+			return this.nodes;
 		}
 	}
 
@@ -27,6 +28,32 @@ public abstract class Graph <T>
 		}
 
 		return null;
+	}
+
+	public List<List<int>> GetDistanceMatrix(){
+		if (distanceMatrix == null || distanceMatrix.Count != nodes.Count) {
+			distanceMatrix = new List<List<int>>();
+
+			for (int i = 0; i < nodes.Count; i++) {
+				distanceMatrix.Add(new List<int>());
+			}
+
+			for (int i = 0; i < nodes.Count; i++) {
+				for (int j = i; j < nodes.Count; j++) {
+					Node<T> node1 = nodes[i];
+					Node<T> node2 = nodes[j];
+
+					int distanceBetweenNodes = GetShortestDistanceBetween(node1.Value, node2.Value);
+					distanceMatrix[i].Add(distanceBetweenNodes);
+
+					if (i != j) {
+						distanceMatrix[j].Add(distanceBetweenNodes);
+					}
+				}
+			}
+		}
+
+		return distanceMatrix;
 	}
 
 	private void AddNode (Node<T> node)
@@ -179,7 +206,15 @@ public abstract class Graph <T>
 		return stringBuilder.ToString ();
 	}
 
-	public List<T> AStarPath (T start, T end, List<T> pathRestrictions)
+	public int GetShortestDistanceBetween(T node1, T node2){
+		if (node1.Equals(node2)) {
+			return 0;
+		}
+
+		return AStarPath (node1, node2).Count;	
+	}
+
+	public List<T> AStarPath (T start, T end, List<T> pathRestrictions=null)
 	{
 		if (pathRestrictions == null) {
 			pathRestrictions = new List<T>();

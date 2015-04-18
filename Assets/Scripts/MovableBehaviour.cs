@@ -42,7 +42,9 @@ public class MovableBehaviour : MonoBehaviour
 
 	public virtual void Move (Direction direction)
 	{
-		movementsQueue.Enqueue (direction);
+		if (direction != Direction.None) {
+			movementsQueue.Enqueue (direction);
+		}
 	}
 
 	public void ClearMovementQueue ()

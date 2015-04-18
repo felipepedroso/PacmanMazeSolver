@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 
 public class MazeLayer : LayerBehaviour
 {
@@ -190,6 +191,20 @@ public class MazeLayer : LayerBehaviour
 		
 		Debug.Log (pathGraph);
 		Graph = pathGraph;
+
+		StringBuilder sb = new StringBuilder ();
+
+		List<List<int>> matrix = Graph.GetDistanceMatrix ();
+		sb.Append("Lines count: " + matrix.Count + "\n");
+		foreach (var list in matrix) {
+			sb.Append("Column count: " + list.Count + "\n");
+			foreach (var item in list) {
+				sb.Append(item +  " ");
+			}
+			sb.Append("\n");
+		}
+
+		Debug.Log (sb.ToString ());
 	}
 
 }

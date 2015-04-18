@@ -8,7 +8,8 @@ public static class DirectionExtensions
 		new Int32Point (0, 1), // Up
 		new Int32Point (1, 0), // Right
 		new Int32Point (0, -1),// Down
-		new Int32Point (-1, 0) // Left
+		new Int32Point (-1, 0), // Left
+		new Int32Point (0, 0) // None
 	};
 
 	public static Direction RandomDirection {
@@ -40,7 +41,11 @@ public static class DirectionExtensions
 			return Direction.Up;
 		}
 
-		return Direction.Down;
+		if (y < 0 && absY > absX) {
+			return Direction.Down;
+		}
+
+		return Direction.None;
 
 	}
 }

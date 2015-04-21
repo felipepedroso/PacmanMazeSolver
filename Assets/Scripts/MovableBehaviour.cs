@@ -18,26 +18,34 @@ public class MovableBehaviour : MonoBehaviour
 		lastMovementTime = DateTime.Now;
 	}
 
-	public virtual void Update(){
+	public virtual void Update ()
+	{
 		if (movementsQueue.Count > 0) {
 			DateTime now = DateTime.Now;
 			TimeSpan timeFromLastMovement = now - lastMovementTime;
 			//Debug.Log("Time from last movement: " + timeFromLastMovement.TotalMilliseconds);
 
 			if (timeFromLastMovement.TotalMilliseconds >= (double)MillissecondsBetweenMovements) {
-				Direction direction = movementsQueue.Dequeue();
-				PreMovementAction(direction);
-				MazeEngine.TryToMove (gameObject, direction);
-				PosMovementAction(direction);
+				Direction direction = movementsQueue.Dequeue ();
+				PreMovementAction (direction);
+				TryToMove(direction);
+				PosMovementAction (direction);
 				lastMovementTime = now;
 			}
 		}
 	}
 
-	public virtual void PosMovementAction(Direction direction){
+	public virtual void PosMovementAction (Direction direction)
+	{
 	}
 
-	public virtual void PreMovementAction(Direction direction){
+	public virtual void PreMovementAction (Direction direction)
+	{
+	}
+
+	public virtual void TryToMove (Direction direction)
+	{
+		MazeEngine.TryToMove (gameObject, direction);
 	}
 
 	public virtual void Move (Direction direction)
@@ -49,7 +57,7 @@ public class MovableBehaviour : MonoBehaviour
 
 	public void ClearMovementQueue ()
 	{
-		movementsQueue.Clear();
+		movementsQueue.Clear ();
 	}
 
 	public void RandomMove ()

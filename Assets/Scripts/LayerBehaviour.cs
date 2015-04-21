@@ -151,7 +151,6 @@ public class LayerBehaviour : MonoBehaviour {
 				Int32Point tilePosition = GetTilePosition (tileGameObject);
 				DestroyImmediate (tileGameObject);
 				layerGrid [tilePosition.X, tilePosition.Y] = null;
-				Debug.Log ("Destroyed a object from layer " + gameObject.name);
 				return true;
 			}
 		}

@@ -17,12 +17,16 @@ public class MazeEngine : MonoBehaviour
 	public const string PacmanLayerName = "PacmanLayer";
 	public const string  PacdotLayerName = "PacdotLayer";
 
+	public const string GhostsLayerName = "GhostsLayer";
+
 	private List<LayerBehaviour> layers;
 	MazeLayer mazeLayer;
 	LayerBehaviour pacmanLayer;
 	LayerBehaviour pacdotLayer;
+	LayerBehaviour ghostsLayer;
 
-	private GhostBehaviour ghost;
+	private List<GhostBehaviour> ghosts;
+	private List<PacdotBehaviour> pacdots;
 	private PacmanBehaviour pacman;
 
 
@@ -53,6 +57,8 @@ public class MazeEngine : MonoBehaviour
 		}
 
 		layers = new List<LayerBehaviour> ();
+		ghosts = new List<GhostBehaviour> ();
+		pacdots = new List<PacdotBehaviour> ();
 
 		if (IsSquare) {
 			Width = Height = Random.Range (MinWidth, MaxWidth);
@@ -65,6 +71,7 @@ public class MazeEngine : MonoBehaviour
 
 		GenerateMaze ();
 		CreatePacmanLayer ();
+		CreateGhostsLayer ();
 		CreatePacdotLayer ();
 	}
 
@@ -83,6 +90,42 @@ public class MazeEngine : MonoBehaviour
 		}
 	}
 
+	void CreateGhostsLayer ()
+	{
+		ghostsLayer = CreateLayer (GhostsLayerName).GetComponent<LayerBehaviour> ();
+		ghostsLayer.InitializeLayer (Width, Height);
+		GameObjectUtils.AppendChild (gameObject, ghostsLayer.gameObject);
+		ghostsLayer.gameObject.transform.position = Vector3.zero;
+		
+		GameObject GhostPrefab = GameObjectUtils.GetPrefabFromResources ("Prefabs/Ghost");
+
+		Color[] colors = {Color.red, Color.magenta, Color.green, Color.blue};
+		for (int i = 0; i < colors.Length; i++) {
+			Int32Point ghostPosition = pacmanLayer.GetRandomEmptyPoint ();
+			GhostBehaviour ghost = ghostsLayer.AddTileFromPrefab (GhostPrefab, ghostPosition).GetComponent<GhostBehaviour> ();
+			ghost.MazeEngine = this;
+
+			//ghost.gameObject.GetComponent<SpriteRenderer>().color = colors[i];
+			ghost.NormalColor = colors[i];
+			ghost.SetColor(ghost.NormalColor);
+			ghost.Obstacles = new List<GameObject> ();
+			ghost.Target = pacman.gameObject;
+
+			pacman.Obstacles.Add (pacman.GhostGameObject);
+			ghosts.Add(ghost);
+		}
+
+		for (int i = 0; i < ghosts.Count; i++) {
+			for (int j = i; j < ghosts.Count; j++) {
+				if (i != j) {
+					ghosts[i].Obstacles.Add(ghosts[j].gameObject);
+					ghosts[j].Obstacles.Add(ghosts[i].gameObject);
+				}
+			}
+		}
+		layers.Add (ghostsLayer);
+	}
+
 	void CreatePacmanLayer ()
 	{
 		pacmanLayer = CreateLayer (PacmanLayerName).GetComponent<LayerBehaviour> ();
@@ -91,20 +134,11 @@ public class MazeEngine : MonoBehaviour
 		pacmanLayer.gameObject.transform.position = Vector3.zero;
 
 		GameObject PacmanPrefab = GameObjectUtils.GetPrefabFromResources ("Prefabs/Pacman");
-		GameObject GhostPrefab = GameObjectUtils.GetPrefabFromResources ("Prefabs/Ghost");
 
 		Int32Point pacmanPosition = pacmanLayer.GetRandomEmptyPoint ();
 		pacman = pacmanLayer.AddTileFromPrefab (PacmanPrefab, pacmanPosition).GetComponent<PacmanBehaviour> ();
 		pacman.MazeEngine = this;
-
-		Int32Point ghostPosition = pacmanLayer.GetRandomEmptyPoint ();
-		ghost = pacmanLayer.AddTileFromPrefab (GhostPrefab, ghostPosition).GetComponent<GhostBehaviour> ();
-		ghost.MazeEngine = this;
-
-		ghost.Target = pacman.gameObject;
-		pacman.Target = pacman.GhostGameObject = ghost.gameObject;
 		pacman.Obstacles = new List<GameObject> ();
-		pacman.Obstacles.Add (pacman.GhostGameObject);
 
 		layers.Add (pacmanLayer);
 	}
@@ -129,7 +163,7 @@ public class MazeEngine : MonoBehaviour
 			PacdotBehaviour pacdot = pacdotLayer.AddTileFromPrefab (PacdotPrefab, pacdotPosition).GetComponent<PacdotBehaviour> ();
 			pacdot.PacmanGameObject = pacman.gameObject;
 			pacdot.MazeEngine = this;
-
+			pacdots.Add(pacdot);
 		}
 
 		//Debug.Log ("Added tiles: " + pacmanLayer.GetAllTiles().Count);
@@ -191,10 +225,26 @@ public class MazeEngine : MonoBehaviour
 		return pacdotLayer.GetTileAt (position) != null;
 	}
 
+	public bool HasGhostAt (Int32Point position)
+	{
+		return ghostsLayer.GetTileAt (position) != null;
+	}
+
 	public void DestroyPacdotAt (Int32Point position)
 	{
 		if (position != null) {
 			pacdotLayer.RemoveTileAt(position);
+		}
+	}
+
+	public void CaptureGhost (Int32Point position)
+	{
+		if (position != null) {
+			GameObject ghostGameObject = ghostsLayer.GetTileAt(position);
+
+			if (ghostGameObject != null) {
+				ghostGameObject.GetComponent<GhostBehaviour>().EnterParalysedMode();
+			}
 		}
 	}
 
@@ -241,24 +291,48 @@ public class MazeEngine : MonoBehaviour
 		return pathToTarget;
 	}
 
-	public GameObject GetNearestPacdot(GameObject seeker){
-		GameObject nearestPacdot = null;
+	private GameObject GetNearestElement (GameObject seeker, List<GameObject> tiles){
+		GameObject element = null;
+		
+		if (seeker != null) {
+			int minPathValue = 0;
+			
+			//			Debug.Log(tiles.Count);
+			foreach (var tile in tiles) {
+				List<Int32Point> pathToElement = GetPathToTarget(seeker, tile);
+				if (element == null || pathToElement.Count < minPathValue) {
+					minPathValue = pathToElement.Count;
+					element = tile;
+				}
+			}
+		}
+		
+		return element;
+	}
+
+	public GameObject GetNearestGhost (GameObject seeker)
+	{	
+		GameObject nearestGhost = null;
 
 		if (seeker != null) {
 			int minPathValue = 0;
 
-			List<GameObject> tiles = pacdotLayer.GetAllTiles();
-//			Debug.Log(tiles.Count);
-			foreach (var pacdot in tiles) {
-				List<Int32Point> pathToPacdot = GetPathToTarget(seeker, pacdot);
-				if (nearestPacdot == null || pathToPacdot.Count < minPathValue) {
-					minPathValue = pathToPacdot.Count;
-					nearestPacdot = pacdot;
+			foreach (var ghost in ghosts) {
+				if (!ghost.IsParalysed) {
+					List<Int32Point> pathToElement = GetPathToTarget(seeker, ghost.gameObject);
+					if (nearestGhost == null || pathToElement.Count < minPathValue) {
+						minPathValue = pathToElement.Count;
+						nearestGhost = ghost.gameObject;
+					}
 				}
 			}
 		}
 
-		return nearestPacdot;
+		return nearestGhost;
+	}
+
+	public GameObject GetNearestPacdot(GameObject seeker){
+		return GetNearestElement (seeker, pacdotLayer.GetAllTiles());
 	}
 
 	public Direction GetSaferDirection (GameObject gameObject, GameObject target)

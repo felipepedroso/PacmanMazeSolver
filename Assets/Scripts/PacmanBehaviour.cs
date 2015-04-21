@@ -39,13 +39,13 @@ public class PacmanBehaviour : TagBehaviour
 		CurrentState = PacmanState.SearchPacdots;
 	}
 
+
 	public override void Update ()
 	{
+
 		base.Update ();
 
-		PathToGhost = Target == GhostGameObject ? PathToTarget : MazeEngine.GetPathToTarget (gameObject, GhostGameObject);
-
-		if (IgnoreAI) {
+		/*if (IgnoreAI) {
 			if (Input.GetKeyDown (KeyCode.UpArrow)) {
 				Move (Direction.Up);
 			}
@@ -62,7 +62,7 @@ public class PacmanBehaviour : TagBehaviour
 				Move (Direction.Left);
 			}
 			//return;
-		}
+		}*/
 
 		if (InvencibleMode) {
 			TimeSpan timeDelta = DateTime.Now - invencibilityTimeStart;
@@ -89,7 +89,6 @@ public class PacmanBehaviour : TagBehaviour
 			SearchPacdots ();
 			break;
 		}
-
 	}
 
 	void ChangeState (PacmanState newState)
@@ -97,9 +96,8 @@ public class PacmanBehaviour : TagBehaviour
 		if (CurrentState != newState) {
 			PacmanState PreviousState = CurrentState;
 			CurrentState = AlwaysSearchingPacdots ? PacmanState.SearchPacdots : newState;
-			Debug.Log (string.Format ("Switched from {0} to {1}", PreviousState, CurrentState));
+			//Debug.Log (string.Format ("Switched from {0} to {1}", PreviousState, CurrentState));
 		}
-
 	}
 
 	void Evade ()
@@ -115,7 +113,8 @@ public class PacmanBehaviour : TagBehaviour
 		}
 
 		// Evading logic
-		Target = GhostGameObject;
+
+		ChooseTarget ();
 		EvadeFromTarget ();
 	}
 
@@ -130,7 +129,8 @@ public class PacmanBehaviour : TagBehaviour
 				return;
 			}
 		}
-		Target = GhostGameObject;
+
+		ChooseTarget ();
 		ChaseTarget ();
 		// Chasing logic
 	}
@@ -141,13 +141,8 @@ public class PacmanBehaviour : TagBehaviour
 			ChangeState (PacmanState.Evading);
 		}
 
-		// Searching Pacdots
-		GameObject nearestPacdot = MazeEngine.GetNearestPacdot (gameObject);
-
-		if (nearestPacdot != null) {
-			Target = nearestPacdot;
-			ChaseTarget ();
-		}
+		ChooseTarget ();
+		ChaseTarget ();
 	}
 
 	public void EnableInvencibleMode ()
@@ -157,15 +152,21 @@ public class PacmanBehaviour : TagBehaviour
 		invencibilityTimeStart = DateTime.Now;
 	}
 
-	bool ReachedPacdot ()
+	void ChooseTarget ()
 	{
-		Int32Point currentPosition = MazeEngine.GetTilePosition (gameObject);
-		return MazeEngine.HasPacdotAt(currentPosition);
+		//Debug.Log("Current state: " + CurrentState);
+		if (CurrentState == PacmanState.SearchPacdots) {
+			Target = MazeEngine.GetNearestPacdot (gameObject);
+		} else {
+			Target = MazeEngine.GetNearestGhost (gameObject);
+		}
+		//Debug.Log("Current target: " + Target.name);
 	}
+
 
 	bool IsGhostNear ()
 	{
-		return PathToGhost.Count < 5 && PathToGhost.Count > 0;
+		return PathToTarget.Count < 5 && PathToTarget.Count > 0;
 	}
 
 	public override void PreMovementAction (Direction direction)
@@ -175,9 +176,15 @@ public class PacmanBehaviour : TagBehaviour
 
 	public override void PosMovementAction (Direction direction)
 	{
-		if (ReachedPacdot ()) {
-			MazeEngine.DestroyPacdotAt(MazeEngine.GetTilePosition (gameObject));
+		Int32Point currentPosition = MazeEngine.GetTilePosition (gameObject);
+
+		if (MazeEngine.HasPacdotAt (currentPosition)) {
+			MazeEngine.DestroyPacdotAt (MazeEngine.GetTilePosition (gameObject));
 			EnableInvencibleMode ();
+		}
+
+		if (MazeEngine.HasGhostAt(currentPosition) && InvencibleMode) {
+			MazeEngine.CaptureGhost (currentPosition);
 		}
 	}
 

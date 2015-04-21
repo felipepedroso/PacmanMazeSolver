@@ -189,7 +189,7 @@ public class MazeLayer : LayerBehaviour
 			}
 		}
 		
-		Debug.Log (pathGraph);
+		//Debug.Log (pathGraph);
 		Graph = pathGraph;
 
 		StringBuilder sb = new StringBuilder ();
@@ -204,7 +204,7 @@ public class MazeLayer : LayerBehaviour
 			sb.Append("\n");
 		}
 
-		Debug.Log (sb.ToString ());
+		//Debug.Log (sb.ToString ());
 	}
 
 }

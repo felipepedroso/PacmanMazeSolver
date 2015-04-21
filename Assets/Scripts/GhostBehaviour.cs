@@ -8,15 +8,28 @@ public class GhostBehaviour : TagBehaviour
 {
 	public Color EvadingColor;
 	public Color NormalColor;
+	public GameObject Body;
+	public EyeBehavior[] Eyes;
+	public int MinimumPacmanDistance;
+	DateTime paralysisStartTime;
+	public double ParalysisTimeInSeconds;
 
 	public enum GhostState
 	{
 		Walking,
 		Chasing,
-		Evading
+		Evading,
+		Paralysed
 	}
 
 	public GhostState CurrentState { get; private set; }
+
+	public bool IsParalysed {
+		get{
+			return CurrentState == GhostState.Paralysed;
+		}
+	}
+
 
 	public override void Start ()
 	{
@@ -39,6 +52,9 @@ public class GhostBehaviour : TagBehaviour
 		case GhostState.Evading:
 			Evade ();
 			break;
+		case GhostState.Paralysed:
+			Recover ();
+			break;
 		case GhostState.Walking:
 		default:
 			Walk ();
@@ -46,8 +62,9 @@ public class GhostBehaviour : TagBehaviour
 		}
 	}
 
-	void SetColor(Color color){
-		gameObject.GetComponent<SpriteRenderer> ().color = color;
+	public void SetColor (Color color)
+	{
+		Body.GetComponent<SpriteRenderer> ().color = color;
 	}
 
 	void ChangeState (GhostState newState)
@@ -55,15 +72,16 @@ public class GhostBehaviour : TagBehaviour
 		if (CurrentState != newState) {
 			GhostState PreviousState = CurrentState;
 			CurrentState = newState;
+			Debug.Log (string.Format ("Switched from {0} to {1}", PreviousState, CurrentState));
 
 			if (CurrentState == GhostState.Evading) {
-				SetColor(EvadingColor);
-			}else{
-				SetColor(NormalColor);
+				SetColor (EvadingColor);
+			} else {
+				SetColor (NormalColor);
 			}
-			Debug.Log (string.Format ("Switched from {0} to {1}", PreviousState, CurrentState));
-		}
 
+			Body.GetComponent<SpriteRenderer>().enabled = CurrentState != GhostState.Paralysed;
+		}
 	}
 
 	private Direction randomDirection;
@@ -87,20 +105,20 @@ public class GhostBehaviour : TagBehaviour
 	void Evade ()
 	{
 		if (!IsPacmanInvencible ()) {
-			if (IsPacmanNear()) {
+			if (IsPacmanNear ()) {
 				ChangeState (GhostState.Chasing);
 				return;
-			}else{
+			} else {
 				ChangeState (GhostState.Walking);
 				return;
 			}
 		} 
 
 		if (IsPacmanNear ()) {
-			ClearMovementQueue();
-			EvadeFromTarget();
+			ClearMovementQueue ();
+			EvadeFromTarget ();
 		} else {
-			RandomMove();
+			RandomMove ();
 		}
 	}
 
@@ -112,21 +130,73 @@ public class GhostBehaviour : TagBehaviour
 		}
 
 		if (IsPacmanNear ()) {
-			ChaseTarget();
+			ChaseTarget ();
 		} else {
 			ChangeState (GhostState.Walking);
 			return;
 		}
 	}
 
+	void Recover ()
+	{
+		TimeSpan timeDelta = DateTime.Now - paralysisStartTime;
+			
+		if (timeDelta.TotalSeconds >= ParalysisTimeInSeconds) {
+		
+			if (IsPacmanInvencible()) {
+				ChangeState(GhostState.Evading);
+				return;
+			}else if (IsPacmanNear()) {
+				ChangeState(GhostState.Chasing);
+				return;
+			} else{
+				ChangeState(GhostState.Walking);
+				return;
+			}
+		}
+
+		RandomMove ();
+	}
+
+	public override void TryToMove (Direction direction)
+	{
+		if (CurrentState != GhostState.Paralysed) {
+			base.TryToMove (direction);
+			Vector3 scale = Body.GetComponent<SpriteRenderer>().transform.localScale;
+			scale.x = -scale.x;
+			Body.GetComponent<SpriteRenderer>().transform.localScale = scale;
+
+
+		}
+	}
+
+	public void EnterParalysedMode ()
+	{
+		if (IsPacmanInvencible()) {
+			ChangeState (GhostState.Paralysed);
+			ClearMovementQueue();
+			paralysisStartTime = DateTime.Now;
+		}
+	}
+
 	bool IsPacmanNear ()
 	{
-		return PathToTarget.Count < 5 && PathToTarget.Count > 0;
+		return PathToTarget.Count < MinimumPacmanDistance && PathToTarget.Count > 0;
 	}
 
 	bool IsPacmanInvencible ()
 	{
 		return MazeEngine.IsPacmanInvencible ();
+	}
+
+	public override void PreMovementAction (Direction direction)
+	{
+		base.PreMovementAction (direction);
+		if (Eyes != null) {
+			foreach (var eye in Eyes) {
+				eye.EyeDirection = direction;
+			}
+		}
 	}
 
 }

@@ -29,6 +29,9 @@ public class MazeEngine : MonoBehaviour
 	private List<PacdotBehaviour> pacdots;
 	private PacmanBehaviour pacman;
 
+	private List<System.DateTime> pacdotRemovalTime;
+
+	public double PacdotRespawTimeInSeconds;
 
 	// Use this for initialization
 	void Start ()
@@ -59,6 +62,7 @@ public class MazeEngine : MonoBehaviour
 		layers = new List<LayerBehaviour> ();
 		ghosts = new List<GhostBehaviour> ();
 		pacdots = new List<PacdotBehaviour> ();
+		pacdotRemovalTime = new List<System.DateTime> ();
 
 		if (IsSquare) {
 			Width = Height = Random.Range (MinWidth, MaxWidth);
@@ -149,7 +153,7 @@ public class MazeEngine : MonoBehaviour
 		GameObjectUtils.AppendChild (gameObject, pacdotLayer.gameObject);
 		pacdotLayer.gameObject.transform.position = Vector3.zero;
 
-		GameObject PacdotPrefab = GameObjectUtils.GetPrefabFromResources ("Prefabs/Pacdot");
+
 		List<Int32Point> emptyPositions = pacmanLayer.GetAllEmptyPositions();
 
 		for (int i = 0; i < 10; i++) {
@@ -157,13 +161,7 @@ public class MazeEngine : MonoBehaviour
 				break;
 			}
 
-			Int32Point pacdotPosition = emptyPositions[Random.Range(0,emptyPositions.Count)];
-			emptyPositions.Remove(pacdotPosition);
-
-			PacdotBehaviour pacdot = pacdotLayer.AddTileFromPrefab (PacdotPrefab, pacdotPosition).GetComponent<PacdotBehaviour> ();
-			pacdot.PacmanGameObject = pacman.gameObject;
-			pacdot.MazeEngine = this;
-			pacdots.Add(pacdot);
+			CreatePacdot(emptyPositions);
 		}
 
 		//Debug.Log ("Added tiles: " + pacmanLayer.GetAllTiles().Count);
@@ -171,6 +169,20 @@ public class MazeEngine : MonoBehaviour
 		//pacdotLayer.GetTileAt (pacdotPosition).GetComponent<PacdotBehavior> ().MazeEngine = this;
 
 		layers.Add (pacdotLayer);
+	}
+
+
+
+	public void CreatePacdot(List<Int32Point> emptyPositions){
+		GameObject PacdotPrefab = GameObjectUtils.GetPrefabFromResources ("Prefabs/Pacdot");
+
+		Int32Point pacdotPosition = emptyPositions[Random.Range(0,emptyPositions.Count)];
+		emptyPositions.Remove(pacdotPosition);
+		
+		PacdotBehaviour pacdot = pacdotLayer.AddTileFromPrefab (PacdotPrefab, pacdotPosition).GetComponent<PacdotBehaviour> ();
+		pacdot.PacmanGameObject = pacman.gameObject;
+		pacdot.MazeEngine = this;
+		pacdots.Add(pacdot);
 	}
 
 	public LayerBehaviour GetLayerByName(string layerName){
@@ -222,7 +234,15 @@ public class MazeEngine : MonoBehaviour
 
 	public bool HasPacdotAt (Int32Point position)
 	{
-		return pacdotLayer.GetTileAt (position) != null;
+		foreach (var pacdot in pacdotLayer.GetAllTiles()) {
+			Int32Point pacdotPosition = GetTilePosition(pacdot.gameObject);
+
+			if (pacdotPosition.Equals(position)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	public bool HasGhostAt (Int32Point position)
@@ -233,7 +253,24 @@ public class MazeEngine : MonoBehaviour
 	public void DestroyPacdotAt (Int32Point position)
 	{
 		if (position != null) {
-			pacdotLayer.RemoveTileAt(position);
+			GameObject pacdotGameObject = pacdotLayer.GetTileAt(position);
+
+			if (pacdotGameObject != null) {
+				pacdots.Remove(pacdotGameObject.GetComponent<PacdotBehaviour>());
+				pacdotLayer.RemoveTile(pacdotGameObject);
+				pacdotRemovalTime.Add(System.DateTime.Now);
+			}
+		}
+	}
+
+	void Update(){
+		System.DateTime now = System.DateTime.Now;
+
+		foreach (System.DateTime removalTime in pacdotRemovalTime.ToArray()) {
+			if (now.Subtract(removalTime).TotalMilliseconds / 1000 >= PacdotRespawTimeInSeconds) {
+				CreatePacdot(pacdotLayer.GetAllEmptyPositions());
+				pacdotRemovalTime.Remove(removalTime);
+			}
 		}
 	}
 

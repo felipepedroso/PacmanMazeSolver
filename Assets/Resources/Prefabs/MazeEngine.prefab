@@ -45,6 +45,7 @@ MonoBehaviour:
   MaxWidth: 10
   MinHeight: 10
   MaxHeight: 10
+  PacdotRespawTimeInSeconds: 5
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

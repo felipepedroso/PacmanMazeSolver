@@ -96,7 +96,7 @@ public class PacmanBehaviour : TagBehaviour
 		if (CurrentState != newState) {
 			PacmanState PreviousState = CurrentState;
 			CurrentState = AlwaysSearchingPacdots ? PacmanState.SearchPacdots : newState;
-			//Debug.Log (string.Format ("Switched from {0} to {1}", PreviousState, CurrentState));
+			Debug.Log (string.Format ("Switched from {0} to {1}", PreviousState, CurrentState));
 		}
 	}
 

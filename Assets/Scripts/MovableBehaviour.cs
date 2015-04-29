@@ -6,15 +6,15 @@ using System;
 public class MovableBehaviour : MonoBehaviour
 {
 	public MazeEngine MazeEngine;
-	private Queue<Direction> movementsQueue;
-	private const double MillissecondsBetweenMovements = 200;
+	private Queue<Direction> movementsQueue = new Queue<Direction> ();
+	public double MillissecondsBetweenMovements;
 	private DateTime lastMovementTime;
 
 	// Use this for initialization
 	public virtual void Start ()
 	{
 		MazeEngine = GameObject.Find ("MazeEngine").GetComponent<MazeEngine> ();	
-		movementsQueue = new Queue<Direction> ();
+		ClearMovementQueue ();
 		lastMovementTime = DateTime.Now;
 	}
 

@@ -43,7 +43,7 @@ public abstract class Graph <T>
 					Node<T> node1 = nodes[i];
 					Node<T> node2 = nodes[j];
 
-					int distanceBetweenNodes = GetShortestDistanceBetween(node1.Value, node2.Value);
+					int distanceBetweenNodes = AStarPath(node1.Value,node2.Value, null).Count;
 					distanceMatrix[i].Add(distanceBetweenNodes);
 
 					if (i != j) {
@@ -211,7 +211,16 @@ public abstract class Graph <T>
 			return 0;
 		}
 
-		return AStarPath (node1, node2).Count;	
+		Node<T> n1 = GetNode (node1);
+		Node<T> n2 = GetNode (node2);
+
+		if (n1 == null || n2 == null) {
+			return 0;
+		}
+
+		List<List<int>> distanceMatrix = GetDistanceMatrix ();
+
+		return distanceMatrix [Nodes.IndexOf (n1)] [Nodes.IndexOf (n2)];
 	}
 
 	public List<T> AStarPath (T start, T end, List<T> pathRestrictions=null)

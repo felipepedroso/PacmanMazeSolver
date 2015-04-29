@@ -40,7 +40,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   IsSquare: 1
-  RemoveDeadEnds: 1
+  RemoveDeadEnds: 0
+  RandomizePositions: 0
   MinWidth: 10
   MaxWidth: 10
   MinHeight: 10

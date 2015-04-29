@@ -200,6 +200,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MazeEngine: {fileID: 0}
+  MillissecondsBetweenMovements: 220
   Target: {fileID: 0}
   EvadingColor: {r: 0, g: 1, b: 1, a: 1}
   NormalColor: {r: .996078432, g: 0, b: 0, a: 1}

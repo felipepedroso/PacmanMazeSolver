@@ -8,6 +8,7 @@ using System;
 public class PacmanBehaviour : TagBehaviour
 {
 	public GameObject GhostGameObject;
+	public List<GhostBehaviour> Ghosts;
 
 	public List<Int32Point> PathToGhost {
 		get;
@@ -114,7 +115,7 @@ public class PacmanBehaviour : TagBehaviour
 
 		// Evading logic
 
-		ChooseTarget ();
+		Target = MazeEngine.GetNearestGhost (gameObject);
 		EvadeFromTarget ();
 	}
 
@@ -130,7 +131,7 @@ public class PacmanBehaviour : TagBehaviour
 			}
 		}
 
-		ChooseTarget ();
+		Target = MazeEngine.GetNearestGhost (gameObject);
 		ChaseTarget ();
 		// Chasing logic
 	}
@@ -139,9 +140,10 @@ public class PacmanBehaviour : TagBehaviour
 	{
 		if (IsGhostNear () && !InvencibleMode) {
 			ChangeState (PacmanState.Evading);
+			return;
 		}
 
-		ChooseTarget ();
+		Target = MazeEngine.GetNearestPacdot (gameObject);
 		ChaseTarget ();
 	}
 
@@ -152,21 +154,15 @@ public class PacmanBehaviour : TagBehaviour
 		invencibilityTimeStart = DateTime.Now;
 	}
 
-	void ChooseTarget ()
-	{
-		//Debug.Log("Current state: " + CurrentState);
-		if (CurrentState == PacmanState.SearchPacdots) {
-			Target = MazeEngine.GetNearestPacdot (gameObject);
-		} else {
-			Target = MazeEngine.GetNearestGhost (gameObject);
-		}
-		//Debug.Log("Current target: " + Target.name);
-	}
-
-
 	bool IsGhostNear ()
 	{
-		return PathToTarget.Count < 5 && PathToTarget.Count > 0;
+		foreach (var ghost in Ghosts) {
+			if (MazeEngine.GetPathToTarget(gameObject,ghost.gameObject, null).Count < 5) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	public override void PreMovementAction (Direction direction)
@@ -174,18 +170,5 @@ public class PacmanBehaviour : TagBehaviour
 		transform.eulerAngles = new Vector3 (0, 0, Angles [(int)direction]);
 	}
 
-	public override void PosMovementAction (Direction direction)
-	{
-		Int32Point currentPosition = MazeEngine.GetTilePosition (gameObject);
-
-		if (MazeEngine.HasPacdotAt (currentPosition)) {
-			MazeEngine.DestroyPacdotAt (MazeEngine.GetTilePosition (gameObject));
-			EnableInvencibleMode ();
-		}
-
-		if (MazeEngine.HasGhostAt(currentPosition) && InvencibleMode) {
-			MazeEngine.CaptureGhost (currentPosition);
-		}
-	}
 
 }

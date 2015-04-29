@@ -7,6 +7,7 @@ public class MazeEngine : MonoBehaviour
 {
 	public bool IsSquare;
 	public bool RemoveDeadEnds;
+	public bool RandomizePositions;
 
 	public int Width{ get; private set; }
 	public int Height{ get; private set; }
@@ -26,7 +27,7 @@ public class MazeEngine : MonoBehaviour
 	LayerBehaviour ghostsLayer;
 
 	private List<GhostBehaviour> ghosts;
-	private List<PacdotBehaviour> pacdots;
+	private List<GameObject> pacdots;
 	private PacmanBehaviour pacman;
 
 	private List<System.DateTime> pacdotRemovalTime;
@@ -61,7 +62,7 @@ public class MazeEngine : MonoBehaviour
 
 		layers = new List<LayerBehaviour> ();
 		ghosts = new List<GhostBehaviour> ();
-		pacdots = new List<PacdotBehaviour> ();
+		pacdots = new List<GameObject> ();
 		pacdotRemovalTime = new List<System.DateTime> ();
 
 		if (IsSquare) {
@@ -104,12 +105,14 @@ public class MazeEngine : MonoBehaviour
 		GameObject GhostPrefab = GameObjectUtils.GetPrefabFromResources ("Prefabs/Ghost");
 
 		Color[] colors = {Color.red, Color.magenta, Color.green, Color.blue};
+		Int32Point[] positions = {new Int32Point(0,0), new Int32Point(Width - 1,0), new Int32Point(Width - 1,Height - 1), new Int32Point(0,Height - 1)};
+
 		for (int i = 0; i < colors.Length; i++) {
-			Int32Point ghostPosition = pacmanLayer.GetRandomEmptyPoint ();
+			Int32Point ghostPosition = RandomizePositions ? pacmanLayer.GetRandomEmptyPoint () : positions[i];
+
 			GhostBehaviour ghost = ghostsLayer.AddTileFromPrefab (GhostPrefab, ghostPosition).GetComponent<GhostBehaviour> ();
 			ghost.MazeEngine = this;
 
-			//ghost.gameObject.GetComponent<SpriteRenderer>().color = colors[i];
 			ghost.NormalColor = colors[i];
 			ghost.SetColor(ghost.NormalColor);
 			ghost.Obstacles = new List<GameObject> ();
@@ -118,6 +121,8 @@ public class MazeEngine : MonoBehaviour
 			pacman.Obstacles.Add (pacman.GhostGameObject);
 			ghosts.Add(ghost);
 		}
+
+		pacman.Ghosts.AddRange (ghosts);
 
 		for (int i = 0; i < ghosts.Count; i++) {
 			for (int j = i; j < ghosts.Count; j++) {
@@ -139,10 +144,11 @@ public class MazeEngine : MonoBehaviour
 
 		GameObject PacmanPrefab = GameObjectUtils.GetPrefabFromResources ("Prefabs/Pacman");
 
-		Int32Point pacmanPosition = pacmanLayer.GetRandomEmptyPoint ();
+		Int32Point pacmanPosition = RandomizePositions ?  pacmanLayer.GetRandomEmptyPoint () : new Int32Point (Width /2 , Height /2);
 		pacman = pacmanLayer.AddTileFromPrefab (PacmanPrefab, pacmanPosition).GetComponent<PacmanBehaviour> ();
 		pacman.MazeEngine = this;
 		pacman.Obstacles = new List<GameObject> ();
+		pacman.Ghosts = new List<GhostBehaviour> ();
 
 		layers.Add (pacmanLayer);
 	}
@@ -153,10 +159,9 @@ public class MazeEngine : MonoBehaviour
 		GameObjectUtils.AppendChild (gameObject, pacdotLayer.gameObject);
 		pacdotLayer.gameObject.transform.position = Vector3.zero;
 
-
 		List<Int32Point> emptyPositions = pacmanLayer.GetAllEmptyPositions();
 
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < 8; i++) {
 			if (emptyPositions == null || emptyPositions.Count <= 0) {
 				break;
 			}
@@ -178,11 +183,8 @@ public class MazeEngine : MonoBehaviour
 
 		Int32Point pacdotPosition = emptyPositions[Random.Range(0,emptyPositions.Count)];
 		emptyPositions.Remove(pacdotPosition);
-		
-		PacdotBehaviour pacdot = pacdotLayer.AddTileFromPrefab (PacdotPrefab, pacdotPosition).GetComponent<PacdotBehaviour> ();
-		pacdot.PacmanGameObject = pacman.gameObject;
-		pacdot.MazeEngine = this;
-		pacdots.Add(pacdot);
+
+		pacdots.Add(pacdotLayer.AddTileFromPrefab (PacdotPrefab, pacdotPosition));
 	}
 
 	public LayerBehaviour GetLayerByName(string layerName){
@@ -235,7 +237,7 @@ public class MazeEngine : MonoBehaviour
 	public bool HasPacdotAt (Int32Point position)
 	{
 		foreach (var pacdot in pacdotLayer.GetAllTiles()) {
-			Int32Point pacdotPosition = GetTilePosition(pacdot.gameObject);
+			Int32Point pacdotPosition = GetTilePosition(pacdot);
 
 			if (pacdotPosition.Equals(position)) {
 				return true;
@@ -250,13 +252,18 @@ public class MazeEngine : MonoBehaviour
 		return ghostsLayer.GetTileAt (position) != null;
 	}
 
+	public bool HasPacmanAt (Int32Point position)
+	{
+		return pacmanLayer.GetTileAt (position) != null;
+	}
+
 	public void DestroyPacdotAt (Int32Point position)
 	{
 		if (position != null) {
 			GameObject pacdotGameObject = pacdotLayer.GetTileAt(position);
 
 			if (pacdotGameObject != null) {
-				pacdots.Remove(pacdotGameObject.GetComponent<PacdotBehaviour>());
+				pacdots.Remove(pacdotGameObject);
 				pacdotLayer.RemoveTile(pacdotGameObject);
 				pacdotRemovalTime.Add(System.DateTime.Now);
 			}
@@ -272,6 +279,26 @@ public class MazeEngine : MonoBehaviour
 				pacdotRemovalTime.Remove(removalTime);
 			}
 		}
+
+		if (pacman != null) {
+			Int32Point pacmanCurrentPosition = GetTilePosition (pacman.gameObject);
+			
+			if (HasPacdotAt(pacmanCurrentPosition)) {
+				pacman.EnableInvencibleMode();
+				DestroyPacdotAt(pacmanCurrentPosition);
+			}
+			
+			if (HasGhostAt(pacmanCurrentPosition)) {
+				if (IsPacmanInvencible()) {
+					CaptureGhost(pacmanCurrentPosition);
+				}else{
+					if (!ghostsLayer.GetTileAt(pacmanCurrentPosition).GetComponent<GhostBehaviour>().IsParalysed) {
+						KillPacman(pacmanCurrentPosition);	
+					}
+				}
+			}	
+		}
+
 	}
 
 	public void CaptureGhost (Int32Point position)
@@ -285,15 +312,22 @@ public class MazeEngine : MonoBehaviour
 		}
 	}
 
+	public void KillPacman (Int32Point position)
+	{
+		if (position != null) {
+			GameObject pacmanGameObject = pacmanLayer.GetTileAt(position);
+			
+			if (pacmanGameObject != null) {
+				pacmanLayer.RemoveTile(pacmanGameObject);
+			}
+		}
+	}
+
 	public void DestroyTile(GameObject gameObject){
 		LayerBehaviour gameObjectLayer = GetGameObjectLayer (gameObject);
 
 		if (gameObjectLayer != null) {
 			gameObjectLayer.RemoveTile(gameObject);
-
-			if (gameObject != null) {
-				gameObject.GetComponent<PacdotBehaviour>().MarkedToBeDestroyed = true;
-			}
 		}
 	}
 
@@ -368,6 +402,7 @@ public class MazeEngine : MonoBehaviour
 		return nearestGhost;
 	}
 
+
 	public GameObject GetNearestPacdot(GameObject seeker){
 		return GetNearestElement (seeker, pacdotLayer.GetAllTiles());
 	}
@@ -386,18 +421,17 @@ public class MazeEngine : MonoBehaviour
 
 		Int32Point saferNode = currentNode.Value;
 		int saferNodeDistance = distanceMatrix [currentPositionIndex][targetIndex];
+
 		List<Int32Point> saferNodes = new List<Int32Point> ();
-
-
 
 		foreach (var neighbour in currentNode.Neighbours) {
 			int neighbourIndex = graph.Nodes.IndexOf (neighbour);
 			int neighbourDistance = distanceMatrix [neighbourIndex][targetIndex];
 
 			if (neighbourDistance > saferNodeDistance) {
-				//saferNode = neighbour.Value;
+				saferNode = neighbour.Value;
 				saferNodes.Add(neighbour.Value);
-				//saferNodeDistance = neighbourDistance;
+				saferNodeDistance = neighbourDistance;
 			}
 		}
 

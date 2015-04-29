@@ -57,6 +57,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MazeEngine: {fileID: 0}
+  MillissecondsBetweenMovements: 200
   Target: {fileID: 0}
   GhostGameObject: {fileID: 0}
   IgnoreAI: 1

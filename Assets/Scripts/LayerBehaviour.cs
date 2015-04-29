@@ -136,7 +136,8 @@ public class LayerBehaviour : MonoBehaviour {
 	
 	public bool IsInsideLayerBounds (Int32Point position)
 	{
-		return position.X >= 0 && position.X < Width && position.Y >= 0 && position.Y < Height;
+
+		return position != null ? position.X >= 0 && position.X < Width && position.Y >= 0 && position.Y < Height : false;
 	}
 
 	public bool IsInsideLayerBounds (int x, int y)

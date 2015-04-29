@@ -129,6 +129,11 @@ public class GhostBehaviour : TagBehaviour
 			return;
 		}
 
+		if (Target == null) {
+			ChangeState (GhostState.Walking);
+			return;			
+		}
+
 		if (IsPacmanNear ()) {
 			ChaseTarget ();
 		} else {
@@ -181,7 +186,7 @@ public class GhostBehaviour : TagBehaviour
 
 	bool IsPacmanNear ()
 	{
-		return PathToTarget.Count < MinimumPacmanDistance && PathToTarget.Count > 0;
+		return Target != null && PathToTarget.Count < MinimumPacmanDistance && PathToTarget.Count > 0;
 	}
 
 	bool IsPacmanInvencible ()
@@ -198,5 +203,4 @@ public class GhostBehaviour : TagBehaviour
 			}
 		}
 	}
-
 }
